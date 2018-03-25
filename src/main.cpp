@@ -69,24 +69,26 @@ void setup() {
 STATE_T find_command_signal()
 {
         int current_frequency=frequency;
-        while (current_frequency == 0)         // frequency changes based on the interupt
-        {
-                //go_forward();
-                delay(250);
+
+        while (current_frequency == 0)
+{
+           // frequency changes based on the interupt
+        rotate_left(2);
 
 
-                // Serial.print ("current frequency");
-                //Serial.println(current_frequency);
+                Serial.print ("current frequency");
+                Serial.println(current_frequency);
 
                 current_frequency= frequency;
+}
 
-        }
         detachCoreTimerService(Counter);
 
         Serial.print ("found frequency: ");
         Serial.println (frequency);
         // stop servos
-        //servo_stop;
+        servo_stop(0);
+        // delay(200)
         Serial.println("servos stoped");
         // once here, signal is something other than 0
         // Note the signal, going to use it later
@@ -94,8 +96,8 @@ STATE_T find_command_signal()
 
         // set your home angle
         home_angle = getyaw() - 180;
-        //Serial.println (home_angle);
-        // goto_angle(home_angle);
+        Serial.println (home_angle);
+        //goto_angle(home_angle);
 
 
         return STATE_PILLAR_SCAN;
@@ -103,6 +105,7 @@ STATE_T find_command_signal()
 
 STATE_T find_diameter_size()
 {
+
 
         int scan_data [181];
         scan(scan_data);
@@ -123,7 +126,7 @@ void loop() {
 
 
 
-//STATE MACHINE------------------------------------------------STATE MACHINE
+//STATE MACHINE------------------------------------------------STATE MACHINE`
 
         Serial.print("current state: ");
         Serial.println(state_names[current_state]);

@@ -81,9 +81,17 @@ uint32_t PID_CALL_BACK(uint32_t currentTime)
         return (currentTime + CORE_TICK_RATE*10);
 }
 
+void reset_ir_Position_motor(){
+    while(!(getirposition() > -100 && getirposition() <-80)) {
+        SoftPWMServoPWMWrite(motorenablepin, 40);
+        delay(100);      
+    }
+     SoftPWMServoPWMWrite(motorenablepin, 0);
 
+    }
 void scan(int a[])
 {
+    reset_ir_Position_motor();
     attachCoreTimerService(PID_CALL_BACK);
     for(int i = 0; i <= 180; ++i)
     {
