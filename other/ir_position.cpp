@@ -7,6 +7,23 @@ int ki=5;
 int desiredangle;
 int lastpidtime;
 int pidintegral;
+int pillarthreshold=400;
+
+
+//structure for angle position data
+
+struct pillar_info
+{
+        int angle;
+        int distance;
+};
+
+struct pillar_all
+{
+        struct pillar_info small;
+        struct pillar_info medium;
+        struct pillar_info large;
+};
 
 
 // IR-Sensor Position Motor---------------------------------------------------
@@ -80,40 +97,97 @@ uint32_t PID_CALL_BACK(uint32_t currentTime)
 
         return (currentTime + CORE_TICK_RATE*10);
 }
+void clasify_pillars (int a[]){    // Takes the values from the scan function
+    struct pillar_all pillar_data;
+        for (int i=0; i<=180; ++i)
+        {
+                // increment untill we start to see a pillar
+                if (a[i] <= pillarthreshold)
+                {
+                    // mark the index where the pillar starts
+                    int start_index = i;
+                    //increment until we stop seeing the pillar
+                    while (a[i] <= pillarthreshold)
+                    {
+                        ++i;
+                    }
+                    //mark where the pillar ends
+                    int end_index = i;
+
+                    // we now know where the pillar starts and ends
+                    // need to figure out which pillar it is
+                    int delta_angle = end_index - start_index;
+
+                    int average_distance=0;
+                    //calculate average distance
+                    for (int j=start_index; j <= end_index; ++j)
+                    {
+                        average_distance = average_distance + a[j];
+                    }
+                    average_distance = average_distance/delta_angle;
+                    int diameter = 2 * average_distance * tan(((float)delta_angle/2)*3.14/180);
+
+                    //calculate angle of pillar relative to robot
+                    int pillar_angle = start_index + delta_angle/2 - 90;
+                    Serial.print("Diameter size: ");
+Serial.print(diameter);
+Serial.print(" pillar_angle: ");
+                    Serial.println(pillar_angle);
+
+                    //determine pillar based on diameter
+                    // if (diameter > 1500;djf) //large pillar
+                    // {
+                    //
+                    //     pillar
+                    //
+                    // }
+                    // else if (diameter > alskdjf && < alsdkjf) //medium pillar
+                    // {
+                    //
+                    // }
+                    // else // must be < alsdkjf, therefore small pillar
+                    // {
+                    //
+                    // }
+                }
+        }
+}
+
+
+
+
 
 void reset_ir_Position_motor(){
-    while(!(getirposition() > -100 && getirposition() <-80)) {
-        SoftPWMServoPWMWrite(motorenablepin, 40);
-        delay(100);      
-    }
-     SoftPWMServoPWMWrite(motorenablepin, 0);
+        while(!(getirposition() > -100 && getirposition() <-80)) {
+                SoftPWMServoPWMWrite(motorenablepin, 40);
+                delay(100);
+        }
+        SoftPWMServoPWMWrite(motorenablepin, 0);
 
-    }
+}
 void scan(int a[])
 {
-    reset_ir_Position_motor();
-    attachCoreTimerService(PID_CALL_BACK);
-    for(int i = 0; i <= 180; ++i)
-    {
-        // instruct pid to goto angle
-        desiredangle = i - 90;
-        //give pid some time to reach angle
-        delay(100);
-        //read the irsensor and store
-        a[i] = irsensor.getDist();
-    }
-    desiredangle = 0;
-    delay(200);
-    detachCoreTimerService(PID_CALL_BACK);
-    SoftPWMServoPWMWrite(motorenablepin, 0);
+        reset_ir_Position_motor();
+        attachCoreTimerService(PID_CALL_BACK);
+        for(int i = 0; i <= 180; ++i)
+        {
+                // instruct pid to goto angle
+                desiredangle = i - 90;
+                //give pid some time to reach angle
+                delay(100);
+                //read the irsensor and store
+                a[i] = irsensor.getDist();
+                Serial.print(i-90);
+                Serial.print(" ");
+                Serial.println(a[i]);
+        }
+        desiredangle = 0;
+        delay(200);
+        detachCoreTimerService(PID_CALL_BACK);
+        SoftPWMServoPWMWrite(motorenablepin, 0);
 
-    for(int i=0; i <= 180; ++i)
-    {
-    Serial.print(i-90);
-    Serial.print(" ");
-    Serial.println(a[i]);
 }
-}
+
 
 
 // int main (void

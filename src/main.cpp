@@ -109,6 +109,7 @@ STATE_T find_diameter_size()
 
         int scan_data [181];
         scan(scan_data);
+        clasify_pillars(scan_data);
 
         return STATE_DONE;
 
