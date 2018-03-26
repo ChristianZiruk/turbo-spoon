@@ -44,6 +44,10 @@ void Decoder(){ //Frequency Sensor DECODER
         count++;
 }
 
+int is_valid_frequency(int frequency)
+{
+    return 1;
+}
 void setup_frequency (){
         attachInterrupt (4,Decoder,FALLING);
         attachCoreTimerService (Counter);

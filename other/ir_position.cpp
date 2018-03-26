@@ -7,7 +7,7 @@ int ki=5;
 int desiredangle;
 int lastpidtime;
 int pidintegral;
-int pillarthreshold=400;
+int pillarthreshold=430;
 
 
 //structure for angle position data
@@ -51,16 +51,16 @@ SharpDistSensor irsensor(irSensorPin, 3);
  * C and P: Coefficients in Distance = C*A^P relation
  * where A is the analog value read from the sensor.
  */
-const float C = 90373.;
-const float P = -1.027;
+const float C = 22455.;
+const float P = -.815;
 
 /*
  * Minimum and maximum analog values for which to return a distance
  * These should represent a range of analog values within which the
  * power fit curve is valid.
  */
-const unsigned int minVal = 90; // ~800 mm
-const unsigned int maxVal = 875; // ~50mm
+const unsigned int minVal = 50; // ~800 mm
+const unsigned int maxVal = 400; // ~50mm
 // Functions.
 
 // PID CALL BACK---------------------------------------------------------------
@@ -97,7 +97,7 @@ uint32_t PID_CALL_BACK(uint32_t currentTime)
 
         return (currentTime + CORE_TICK_RATE*10);
 }
-void clasify_pillars (int a[]){    // Takes the values from the scan function
+struct pillar_all clasify_pillars (int a[]){    // Takes the values from the scan function
     struct pillar_all pillar_data;
         for (int i=0; i<=180; ++i)
         {
@@ -129,28 +129,36 @@ void clasify_pillars (int a[]){    // Takes the values from the scan function
 
                     //calculate angle of pillar relative to robot
                     int pillar_angle = start_index + delta_angle/2 - 90;
-                    Serial.print("Diameter size: ");
-Serial.print(diameter);
-Serial.print(" pillar_angle: ");
-                    Serial.println(pillar_angle);
+
+                    Serial.print("Found pillar at angle: ");
+                    Serial.print(pillar_angle);
+                    Serial.print(" diameter: ");
+                    Serial.println(diameter);
 
                     //determine pillar based on diameter
-                    // if (diameter > 1500;djf) //large pillar
-                    // {
-                    //
-                    //     pillar
-                    //
-                    // }
-                    // else if (diameter > alskdjf && < alsdkjf) //medium pillar
-                    // {
-                    //
-                    // }
-                    // else // must be < alsdkjf, therefore small pillar
-                    // {
-                    //
-                    // }
+                    if ((diameter >= 150) && (diameter < 200)) //large pillar
+                    {
+                        Serial.println("classifying as large pillar");
+                        pillar_data.large.angle= pillar_angle;
+                        pillar_data.large.distance= average_distance;
+
+                    }
+                    else if ((diameter >= 100) && (diameter < 150)) //medium pillar
+                    {
+
+                    }
+                    else if ((diameter >= 10) && (diameter < 100)) // small pillar
+                    {
+
+                    }
+                    else // weird diameter
+                    {
+                        Serial.println("weird diameter, can't classify");
+                    }
                 }
         }
+
+        return pillar_data;
 }
 
 

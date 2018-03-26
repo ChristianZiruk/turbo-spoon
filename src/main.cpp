@@ -85,31 +85,50 @@ STATE_T find_command_signal()
         detachCoreTimerService(Counter);
 
         Serial.print ("found frequency: ");
-        Serial.println (frequency);
-        // stop servos
-        servo_stop(0);
-        // delay(200)
-        Serial.println("servos stoped");
-        // once here, signal is something other than 0
-        // Note the signal, going to use it later
-        command_signal = current_frequency;
+        Serial.println (current_frequency);
+        if (is_valid_frequency(current_frequency))// make code for valid frquency function
+        {
+            // stop servos
+            servo_stop(0);
+            // delay(200)
+            Serial.println("servos stoped");
+            // once here, signal is something other than 0
+            // Note the signal, going to use it later
+            command_signal = current_frequency;
 
-        // set your home angle
-        home_angle = getyaw() - 180;
-        Serial.println (home_angle);
-        //goto_angle(home_angle);
+            // set your home angle
+            home_angle = getyaw() - 180;
+            Serial.println (home_angle);
+            //goto_angle(home_angle);
+            return STATE_PILLAR_SCAN;
+        }
+        //implicit else
 
-
-        return STATE_PILLAR_SCAN;
+        return STATE_GET_COMMAND;
 }
 
 STATE_T find_diameter_size()
 {
 
-
+        struct pillar_all pillar_data;
         int scan_data [181];
         scan(scan_data);
-        clasify_pillars(scan_data);
+        pillar_data = clasify_pillars(scan_data);
+
+        switch(frequency)
+        {
+            case 50: //large pillar
+                //rotate to pillar.large.angle + current yaw
+                break;
+            case 100:// Medium Pillar
+                //rotate to pillar.medium.angle + current_yaw
+                break;
+            case 200: //Small Pillar
+
+                break;
+        }
+
+        //move forward
 
         return STATE_DONE;
 
