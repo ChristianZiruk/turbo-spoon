@@ -12,7 +12,10 @@
 #include "../other/movement.cpp" // movement code eg: encoder movement
 
 //STATE MACHINE --------------------------------------------------------------
+
+int magneto=0;
 int home_angle=0;
+
 
 
 
@@ -21,14 +24,14 @@ typedef enum {
         STATE_START,// startign orientation
         STATE_GET_COMMAND,
         STATE_PILLAR_SCAN,
-        STATE_GET_MISSION,
+        STATE_GO_COLOR,
         STATE_DONE,
 } STATE_T;
 
 char *state_names[]= {"STATE_START",
                       "STATE_GET_COMMAND",
                       "STATE_PILLAR_SCAN",
-                      "STATE_GET_MISSION",
+                      "STATE_GO_COLOR",
                       "STATE_DONE",};
 
 STATE_T current_state;
@@ -66,21 +69,22 @@ void setup() {
 // // // DO NOT PRINT OR ADD BELOW IN SETUP. !KEEP CODE! ABOVE "SETUP COMPLETE"
 }
 //END OF SETUP---------------------------------------------------------------
+
 STATE_T find_command_signal()
 {
         int current_frequency=frequency;
 
         while (current_frequency == 0)
-{
-           // frequency changes based on the interupt
-        rotate_left(2);
+        {
+                // frequency changes based on the interupt
+                rotate_left(2);
 
 
                 Serial.print ("current frequency");
                 Serial.println(current_frequency);
 
                 current_frequency= frequency;
-}
+        }
 
         detachCoreTimerService(Counter);
 
@@ -88,19 +92,19 @@ STATE_T find_command_signal()
         Serial.println (current_frequency);
         if (is_valid_frequency(current_frequency))// make code for valid frquency function
         {
-            // stop servos
-            servo_stop(0);
-            // delay(200)
-            Serial.println("servos stoped");
-            // once here, signal is something other than 0
-            // Note the signal, going to use it later
-            command_signal = current_frequency;
+                // stop servos
+                servo_stop();
+                // delay(200)
+                Serial.println("s stoped");
+                // once here, signal is something other than 0
+                // Note the signal, going to use it later
+                command_signal = current_frequency;
 
-            // set your home angle
-            home_angle = getyaw() - 180;
-            Serial.println (home_angle);
-            //goto_angle(home_angle);
-            return STATE_PILLAR_SCAN;
+                // set your home angle
+                home_angle = getyaw() - 180;
+                Serial.println (home_angle);
+                goto_angle(home_angle);// goes to home angle 180 degrees diffrence from the initial BNO input angle
+                return STATE_PILLAR_SCAN;
         }
         //implicit else
 
@@ -115,24 +119,40 @@ STATE_T find_diameter_size()
         scan(scan_data);
         pillar_data = clasify_pillars(scan_data);
 
+
         switch(frequency)
         {
-            case 50: //large pillar
-                //rotate to pillar.large.angle + current yaw
-                break;
-            case 100:// Medium Pillar
-                //rotate to pillar.medium.angle + current_yaw
-                break;
-            case 200: //Small Pillar
+        case 50:     //large pillar/
+
+                 goto_angle(pillar_data.large.angle+getyaw()); //goes to the "go_to_angle function and passes the data from the scan function from the struct class"
 
                 break;
+        case 100:    // Medium Pillar
+                 goto_angle(pillar_data.medium.angle+getyaw());// ^^^^^^^^
+                break;
+        case 200:     //Small Pillar
+                 goto_angle(pillar_data.small.angle+getyaw());//^^^^^^^^^^
+            break;
         }
 
         //move forward
 
-        return STATE_DONE;
-
+        return STATE_GO_COLOR;
 }
+STATE_T color_pillar(){
+     forward_until_color();
+
+
+        return STATE_DONE;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -142,13 +162,13 @@ STATE_T find_diameter_size()
 
 // // //LOOP-------------------------------------------------------------------LOOP
 void loop() {
-
-
+        // magneto= getirposition();
+        // Serial.println(magneto);
 
 
 //STATE MACHINE------------------------------------------------STATE MACHINE`
 
-        Serial.print("current state: ");
+        Serial.print("current state:");
         Serial.println(state_names[current_state]);
         switch (current_state)
         {
@@ -162,17 +182,19 @@ void loop() {
         case STATE_PILLAR_SCAN:
                 current_state = find_diameter_size();
                 break;
+        case STATE_GO_COLOR:
+            current_state = color_pillar();
         case STATE_DONE:
                 delay(3000);
                 break;
 
         }
-
+//
         // Serial.println(scancolors());// ---------------------SERIAL PRINT
-
+        //
         // Get distance from sensor-------------------------------------------
         // unsigned int distance = irsensor.getDist();
-        //Serial.println(distance);
+        // Serial.println(distance);
 
 
 
@@ -181,7 +203,7 @@ void loop() {
 
 
 
-
+//
 // for(int i=0; i<100; ++i)
 // {
 //     desiredangle = map(i, 0, 100, -90, 0);
@@ -210,7 +232,7 @@ void loop() {
 
 // //
 // //         //GET THE YAW POSITION-------------------------------------------------
-// //         //int yaw = getyaw();
+        int yaw = getyaw();
 // //         //Serial.println(yaw);//--------------------------------------SERIAL PRINT
 // //
 // //
@@ -225,6 +247,6 @@ void loop() {
 
 
 
-
 }
+
 //-----------------------------------------------------------------------------------

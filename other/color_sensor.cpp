@@ -72,16 +72,10 @@ COLOR_TYPE scancolors (void){
         {
                 return BLUE_PAD;
         }
-
-
 // while(1) //Forever Loop Stops color not recognized
 //         {
 //                 Serial.println("Recolorbrate");
 //  delay(1000);
 //         }
 //END CALIBRATION----------------COLOR_PADS---------------------END_CALIBRATION
-
-
-
-
 }

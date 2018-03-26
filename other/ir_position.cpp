@@ -2,8 +2,8 @@
 #include <SharpDistSensor.h>
 #include <SoftPWMServo.h> // "Pulse Width Modulation" Library. Used to drive DC Motor
 
-int kp=5;
-int ki=5;
+int kp=8;
+int ki=6;
 int desiredangle;
 int lastpidtime;
 int pidintegral;
@@ -37,8 +37,9 @@ float getirposition(void)
 {
         int rawirposition = analogRead(irpositionPin);
 
-        //Serial.println(irposition);
+
         float irposition= 0.3515 *rawirposition -139.44;
+        //Serial.println(irposition);
         return irposition;
 }
 
@@ -166,7 +167,7 @@ struct pillar_all clasify_pillars (int a[]){    // Takes the values from the sca
 
 
 void reset_ir_Position_motor(){
-        while(!(getirposition() > -100 && getirposition() <-80)) {
+        while(!(getirposition() > -120 && getirposition() <-60)) {
                 SoftPWMServoPWMWrite(motorenablepin, 40);
                 delay(100);
         }

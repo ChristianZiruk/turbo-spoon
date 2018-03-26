@@ -35,9 +35,27 @@ void go_backward(int speed)
     rightservo.write(90+speed);
 }
 
-void servo_stop(int speed)
+void servo_stop()
 {
-    speed = map(speed,0,100,0,90);
-    leftservo.write(90-speed);
-    rightservo.write(90-speed);
+
+    leftservo.write(90);
+    rightservo.write(90);
+}
+
+void goto_angle (int angle){
+int current_yaw = getyaw();
+        while(!(current_yaw > angle-3) && (current_yaw < angle+3)){ // command to go to home angle
+    rotate_right(10);
+    current_yaw= getyaw();
+    }
+}
+
+//Find color function used in the COLOR_STATE
+COLOR_TYPE forward_until_color(){
+        while((scancolors() == WHITE_PAD)){
+        go_forward(5);
+
+    }
+    servo_stop();
+    return scancolors();
 }
