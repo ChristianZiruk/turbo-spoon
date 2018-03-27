@@ -46,10 +46,14 @@ void servo_stop()
 
 void goto_angle (int angle){
     int current_yaw = getyaw();
-        while(!(current_yaw > angle-3) && (current_yaw < angle+3)){ // command to go to home angle
-    rotate_right(10);
+        while(!(current_yaw > angle-10) && (current_yaw < angle+10)){ // command to go to home angle
+    rotate_left(3);
+
+
+
     current_yaw= getyaw();
     }
+    Serial.print("Found pillar side");
 }
 
 //Find color function used in the COLOR_STATE
@@ -72,13 +76,69 @@ if ( parkcolor == BLACK_PAD) {
     else if (parkcolor == RED_PAD ){
         while((scancolors() == parkcolor)){
         rotate_left(4);
+        delay(300);
+        go_forward(3);
         Serial.print("success Turbo-Spoon Parked for RED");
+        }
+    }
+    else if (parkcolor == BLUE_PAD ){
+        while((scancolors() == parkcolor)){
+            rotate_left(4);
+            Serial.print("success Turbo-Spoon Parked For BLUE");
+
+        }
+    }
+
+
+    }
+//Rotate RED
+
+void rotate_red(){
+
+if ( parkcolor == RED_PAD) {
+
+    servo_stop();
+    Serial.print("success Turbo-Spoon Parked for RED");
+}
+    else if (parkcolor == BLACK_PAD ){
+        while((scancolors() == parkcolor)){
+        rotate_right(4);
+        delay(300);
+        go_forward(4);
+        Serial.print("success Turbo-Spoon Parked for Black");
         }
     }
     else if (parkcolor == BLUE_PAD ){
         while((scancolors() == parkcolor)){
             rotate_right(4);
             Serial.print("success Turbo-Spoon Parked For BLUE");
+
+        }
+    }
+
+
+    }
+
+//Rotate BLUE
+
+
+void rotate_blue(){
+
+if ( parkcolor == 0) {
+
+    servo_stop();
+    Serial.print("success Turbo-Spoon Parked for Blue");
+}
+    else if (parkcolor == 1){
+        while((scancolors() == parkcolor)){
+        rotate_left(4);
+        Serial.print("success Turbo-Spoon Parked for RED");
+        }
+    }
+    else if (parkcolor == 3 ){
+        while((scancolors() == parkcolor)){
+            rotate_right(4);
+            Serial.print("success Turbo-Spoon Parked For BLACK");
 
         }
     }

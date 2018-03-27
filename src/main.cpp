@@ -13,7 +13,8 @@
 //STATE MACHINE --------------------------------------------------------------
 
 int magneto=0;
-//int home_angle=0;
+int home_angle=0;
+int new_home_angle=0;
 
 
 
@@ -106,29 +107,38 @@ STATE_T find_command_signal()
                 // delay(200)
                 Serial.println("s stoped");
 
-                // Note the signal, Use it for pillar scan
-                command_signal = current_frequency;
-//Serial.print("BEFOREHOME");
-                // rotate_left(5);
-                // delay(2000);
 
-                int home_angle=0;
-                home_angle = getyaw() - 180;
-                Serial.println (home_angle);
-                goto_angle(home_angle);// goes to home angle 180 degrees diffrence from the initial BNO input angle
+                                // Note the signal, Use it for pillar scan
+                                command_signal = current_frequency;
+                //Serial.print("BEFOREHOME");
+                                // rotate_left(5);
+                                // delay(2000);
+
+                                // set your home angle
+                                int home_angle=0;
+                                home_angle =180 ; //getyaw() - 180;
+
+                                //new_home_angle= home_angle+360;
+                                Serial.println (home_angle);
+                                goto_angle(home_angle);// goes to home angle 180 degrees diffrence from the initial BNO input angle
+                                servo_stop();
+                                return STATE_PILLAR_SCAN;
 
 
-                 return STATE_PILLAR_SCAN;
+                                 return STATE_PILLAR_SCAN;
 
 
-Serial.print("AfterHOME") ;
-        }
-        //implicit else
+                Serial.print("AfterHOME") ;
+                        }
+                        //implicit else
 
-       return STATE_GET_COMMAND;
-}
+                        return STATE_GET_COMMAND;
+                       return STATE_GET_COMMAND;
+                }
 
-STATE_T find_diameter_size()
+
+
+                STATE_T find_diameter_size()
 {
 
         struct pillar_all pillar_data;
@@ -157,7 +167,7 @@ STATE_T find_diameter_size()
         return STATE_GO_COLOR;
 }
 STATE_T color_pillar(){
-        parkcolor=forward_until_color();
+        COLOR_TYPE parkcolor=forward_until_color();
         return STATE_PARK;
 }
 
@@ -172,18 +182,19 @@ STATE_T park(){
         }
         detachCoreTimerService(Counter);
 
-        Serial.print ("found frequency: ");
+        Serial.println ("found frequency: ");
         forward_until_color();
-        COLOR_TYPE current_color= scancolors();
+         int current_color= scancolors();
+        Serial.println(current_color);
         switch (current_color) {
-        case BLACK_PAD:
+        case 0:
                 rotate_black();//Function if the robot lands on black first
                 break;
-        case RED_PAD:
-                //rotate_red();//Function if the robot lands on red first
+        case 1:
+                rotate_red();//Function if the robot lands on red first
                 break;
-        case BLUE_PAD:
-                //rotate_blue();// Function if the robot lands on blue first
+        case 3:
+                rotate_blue();// Function if the robot lands on blue first
                 break;
         }
 
