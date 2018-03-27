@@ -2,19 +2,20 @@
 //LIBRARYS-----------------------------------------------------------------
 #include <Arduino.h> // Arduino Library
 #include <Servo.h> // Servo Library
-#include <SharpDistSensor.h> // IR Sensor Library
+#include <SharpDistSensor.h> // IR Sensor Library GITHUB LIBRARY " Creator:DRG Freeman"
 #include <SoftPWMServo.h> // "Pulse Width Modulation" Library. Used to drive DC Motor
 #include "../other/color_sensor.cpp"// color sensor function code
-#include "../other/ir_sensor.cpp" //ir sensor function code
-#include "../other/bno_orientation.cpp"//BNO Oreintation
+#include "../other/bno_orientation.cpp"//BNO 0555 Oreintation "Creator Adafruit"
 #include "../other/ir_position.cpp"// IR_Position Sensor AS56000
-#include "../other/frequency.cpp"  // IR_ferquency sensor
+#include "../other/frequency.cpp"  // IR_ferquency sensor//
 #include "../other/movement.cpp" // movement code eg: encoder movement
-
+#include"../other/limit_switch_interupt.cpp"// Limit Switch interup "Emergency Switch"
 //STATE MACHINE --------------------------------------------------------------
 
 int magneto=0;
-int home_angle=0;
+//int home_angle=0;
+
+
 
 
 
@@ -25,6 +26,7 @@ typedef enum {
         STATE_GET_COMMAND,
         STATE_PILLAR_SCAN,
         STATE_GO_COLOR,
+        STATE_PARK,
         STATE_DONE,
 } STATE_T;
 
@@ -32,6 +34,7 @@ char *state_names[]= {"STATE_START",
                       "STATE_GET_COMMAND",
                       "STATE_PILLAR_SCAN",
                       "STATE_GO_COLOR",
+                      "STATE_PARK",
                       "STATE_DONE",};
 
 STATE_T current_state;
@@ -42,6 +45,12 @@ int num_successful_runs;
 void setup() {
         Serial.begin(115200); //Hardware Serial Initialize
         Serial1.begin(115200);//Software Seerial Initialized Talking to the BNO0055 orientation sensor
+//Interupt
+        attachInterrupt(1,limit_switch_ISR,FALLING);
+attachInterrupt(2,limit_switch_ISR,FALLING);
+
+
+
 // COLOR SENSOR--------------------------------------------------------------
 // declare the LED pins as an OUTPUT:
         pinMode(rPin, OUTPUT); //RED PIN
@@ -96,19 +105,27 @@ STATE_T find_command_signal()
                 servo_stop();
                 // delay(200)
                 Serial.println("s stoped");
-                // once here, signal is something other than 0
-                // Note the signal, going to use it later
-                command_signal = current_frequency;
 
-                // set your home angle
+                // Note the signal, Use it for pillar scan
+                command_signal = current_frequency;
+//Serial.print("BEFOREHOME");
+                // rotate_left(5);
+                // delay(2000);
+
+                int home_angle=0;
                 home_angle = getyaw() - 180;
                 Serial.println (home_angle);
                 goto_angle(home_angle);// goes to home angle 180 degrees diffrence from the initial BNO input angle
-                return STATE_PILLAR_SCAN;
+
+
+                 return STATE_PILLAR_SCAN;
+
+
+Serial.print("AfterHOME") ;
         }
         //implicit else
 
-        return STATE_GET_COMMAND;
+       return STATE_GET_COMMAND;
 }
 
 STATE_T find_diameter_size()
@@ -124,15 +141,15 @@ STATE_T find_diameter_size()
         {
         case 50:     //large pillar/
 
-                 goto_angle(pillar_data.large.angle+getyaw()); //goes to the "go_to_angle function and passes the data from the scan function from the struct class"
+                goto_angle(pillar_data.large.angle+getyaw());  //goes to the "go_to_angle function and passes the data from the scan function from the struct class"
 
                 break;
         case 100:    // Medium Pillar
-                 goto_angle(pillar_data.medium.angle+getyaw());// ^^^^^^^^
+                goto_angle(pillar_data.medium.angle+getyaw()); // ^^^^^^^^
                 break;
         case 200:     //Small Pillar
-                 goto_angle(pillar_data.small.angle+getyaw());//^^^^^^^^^^
-            break;
+                goto_angle(pillar_data.small.angle+getyaw()); //^^^^^^^^^^
+                break;
         }
 
         //move forward
@@ -140,32 +157,44 @@ STATE_T find_diameter_size()
         return STATE_GO_COLOR;
 }
 STATE_T color_pillar(){
-     forward_until_color();
+        parkcolor=forward_until_color();
+        return STATE_PARK;
+}
 
+STATE_T park(){
+        go_backward(5);
+        delay(2000);
+        setup_frequency();
+        while (frequency == 0)
+        {
+                // frequency changes based on the interupt
+                rotate_left(3);
+        }
+        detachCoreTimerService(Counter);
+
+        Serial.print ("found frequency: ");
+        forward_until_color();
+        COLOR_TYPE current_color= scancolors();
+        switch (current_color) {
+        case BLACK_PAD:
+                rotate_black();//Function if the robot lands on black first
+                break;
+        case RED_PAD:
+                //rotate_red();//Function if the robot lands on red first
+                break;
+        case BLUE_PAD:
+                //rotate_blue();// Function if the robot lands on blue first
+                break;
+        }
 
         return STATE_DONE;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // //LOOP-------------------------------------------------------------------LOOP
 void loop() {
         // magneto= getirposition();
         // Serial.println(magneto);
 
-
+            //while(1);
 //STATE MACHINE------------------------------------------------STATE MACHINE`
 
         Serial.print("current state:");
@@ -183,18 +212,22 @@ void loop() {
                 current_state = find_diameter_size();
                 break;
         case STATE_GO_COLOR:
-            current_state = color_pillar();
+                current_state = color_pillar();
+                break;
+        case STATE_PARK:
+                current_state = park();
+                break;
         case STATE_DONE:
                 delay(3000);
                 break;
 
         }
-//
-        // Serial.println(scancolors());// ---------------------SERIAL PRINT
-        //
-        // Get distance from sensor-------------------------------------------
-        // unsigned int distance = irsensor.getDist();
-        // Serial.println(distance);
+
+        //Serial.println(scancolors());// ---------------------SERIAL PRINT
+
+        //Get distance from sensor-------------------------------------------
+        //unsigned int distance = irsensor.getDist();
+        //Serial.println(distance);
 
 
 
@@ -232,8 +265,8 @@ void loop() {
 
 // //
 // //         //GET THE YAW POSITION-------------------------------------------------
-        int yaw = getyaw();
-// //         //Serial.println(yaw);//--------------------------------------SERIAL PRINT
+        //int yaw = getyaw();
+        // Serial.println(yaw);//--------------------------------------SERIAL PRINT
 // //
 // //
 

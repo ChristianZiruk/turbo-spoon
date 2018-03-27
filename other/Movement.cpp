@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <Servo.h>
+COLOR_TYPE parkcolor; // collor type
+
 
 Servo rightservo;  // create servo object to control a servo
 Servo leftservo;  // create servo object to control a servo
@@ -43,7 +45,7 @@ void servo_stop()
 }
 
 void goto_angle (int angle){
-int current_yaw = getyaw();
+    int current_yaw = getyaw();
         while(!(current_yaw > angle-3) && (current_yaw < angle+3)){ // command to go to home angle
     rotate_right(10);
     current_yaw= getyaw();
@@ -59,3 +61,27 @@ COLOR_TYPE forward_until_color(){
     servo_stop();
     return scancolors();
 }
+
+void rotate_black(){
+
+if ( parkcolor == BLACK_PAD) {
+
+    servo_stop();
+    Serial.print("success Turbo-Spoon Parked for Black");
+}
+    else if (parkcolor == RED_PAD ){
+        while((scancolors() == parkcolor)){
+        rotate_left(4);
+        Serial.print("success Turbo-Spoon Parked for RED");
+        }
+    }
+    else if (parkcolor == BLUE_PAD ){
+        while((scancolors() == parkcolor)){
+            rotate_right(4);
+            Serial.print("success Turbo-Spoon Parked For BLUE");
+
+        }
+    }
+
+
+    }
