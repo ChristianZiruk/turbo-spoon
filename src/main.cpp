@@ -13,8 +13,8 @@
 //STATE MACHINE --------------------------------------------------------------
 
 int magneto=0;
-int home_angle=0;
-int new_home_angle=0;
+int home_angle=0;// Home angle
+int new_home_angle=0;// Home angle for the 180 degree turn at the begining of the run
 
 
 
@@ -24,11 +24,11 @@ int new_home_angle=0;
 
 typedef enum {
         STATE_START,// startign orientation
-        STATE_GET_COMMAND,
-        STATE_PILLAR_SCAN,
-        STATE_GO_COLOR,
-        STATE_PARK,
-        STATE_DONE,
+        STATE_GET_COMMAND,// State to find the frequency between 50-200.
+        STATE_PILLAR_SCAN,// Once faced toward the pillars the scan starts at -90 and rotates to 90 degrees
+        STATE_GO_COLOR, // Uses stored angle values for each pillar and rotates to the pillar based on frequency and drives twards pillar
+        STATE_PARK, // has stored "parkcolor" , rotates and finds the frequency transmitter, drives then parks
+        STATE_DONE,// DONE
 } STATE_T;
 
 char *state_names[]= {"STATE_START",
@@ -47,8 +47,8 @@ void setup() {
         Serial.begin(115200); //Hardware Serial Initialize
         Serial1.begin(115200);//Software Seerial Initialized Talking to the BNO0055 orientation sensor
 //Interupt
-        attachInterrupt(1,limit_switch_ISR,FALLING);
-attachInterrupt(2,limit_switch_ISR,FALLING);
+        attachInterrupt(1,limit_switch_ISR,FALLING);// Limit switch external interupt 1
+attachInterrupt(2,limit_switch_ISR,FALLING); // limit Switch external interupt 2
 
 
 
@@ -58,8 +58,8 @@ attachInterrupt(2,limit_switch_ISR,FALLING);
         pinMode(gPin, OUTPUT); //GREEN PIN
         pinMode(bPin, OUTPUT); // BLUE PIN
 // SERVO--------------------------------------------------------------------
-        leftservo.attach(LEFTSERVOPIN);
-        rightservo.attach(RIGHTSEROVPIN);
+        leftservo.attach(LEFTSERVOPIN); //Left Servo parrallax
+        rightservo.attach(RIGHTSEROVPIN);// Right Servo parrallax
 // IR SENSOR-----------------------------------------------------------------
         irsensor.setPowerFitCoeffs(C,P, minVal, maxVal);
 // IR POSITION MOTOR----------------------------------------------------------
@@ -75,7 +75,7 @@ attachInterrupt(2,limit_switch_ISR,FALLING);
         num_successful_runs=0;
 
 // // // SET UP COMPLETE
-        Serial.println("setup complete");
+        Serial.println("setup complete");// Used to make sure that the code gets everything setup
 // // // DO NOT PRINT OR ADD BELOW IN SETUP. !KEEP CODE! ABOVE "SETUP COMPLETE"
 }
 //END OF SETUP---------------------------------------------------------------
@@ -84,6 +84,7 @@ STATE_T find_command_signal()
 {
         int current_frequency=frequency;
 
+// The current frequency is equal to 0 the robot rotates left. Once found the robot stops
         while (current_frequency == 0)
         {
                 // frequency changes based on the interupt
@@ -167,15 +168,15 @@ STATE_T find_command_signal()
         return STATE_GO_COLOR;
 }
 STATE_T color_pillar(){
-        COLOR_TYPE parkcolor=forward_until_color();
-        return STATE_PARK;
+        COLOR_TYPE parkcolor=forward_until_color(); // The robot goes foraward until color is detected and stores it
+        return STATE_PARK;// Goes to nest state
 }
 
 STATE_T park(){
-        go_backward(5);
-        delay(2000);
+        go_backward(5); // goes backwards so that the robot can be close to the IR transmitter
+        delay(2000);// does movement for 2 seconds
         setup_frequency();
-        while (frequency == 0)
+        while (frequency == 0) // rotates until frequency is 0
         {
                 // frequency changes based on the interupt
                 rotate_left(3);
@@ -183,10 +184,10 @@ STATE_T park(){
         detachCoreTimerService(Counter);
 
         Serial.println ("found frequency: ");
-        forward_until_color();
-         int current_color= scancolors();
+        forward_until_color();// goes forward until a color is detected
+         int current_color= scancolors(); // uses the value of "scan colors for current_color"
         Serial.println(current_color);
-        switch (current_color) {
+        switch (current_color) { // uses the current color to go into switch case
         case 0:
                 rotate_black();//Function if the robot lands on black first
                 break;
@@ -198,7 +199,7 @@ STATE_T park(){
                 break;
         }
 
-        return STATE_DONE;
+        return STATE_DONE;// Finished
 }
 // // //LOOP-------------------------------------------------------------------LOOP
 void loop() {
